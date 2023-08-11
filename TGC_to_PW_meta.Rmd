@@ -1,0 +1,119 @@
+---
+title: "Convert TGC template to PW template"
+author: "Zoe Dyson & Kat Holt"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    number_sections: TRUE
+    fig_width: 8.27
+    fig_height: 11.69
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = getwd())
+
+# Data wrangling
+library(tidyverse)
+library(dplyr)
+library(reshape2)
+```
+
+## Load data
+``` {r load_data}
+
+# TGC metadata template
+tgc_data <- read_csv("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv",
+                     col_types = cols(.default = "c"))
+
+# PW template with ID column
+pw_ids <- read_csv("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/metadata.csv")
+
+# Get date for naming new sheet
+todays_date <- str_replace_all(Sys.Date(),"-","")
+```
+
+# Clean up data and wrange into PW format
+``` {r}
+pw_format <- tgc_data %>% 
+  # Curate location data
+  mutate(Country_Origin = ifelse(
+    `Travel Associated` == "Yes", `Travel Country`, Country)) %>% 
+  # name columns for PW
+  mutate(tgc_id=`Data Accession`) %>% 
+  # Add GPS data columns
+  mutate(latitude = "Not Provided") %>%
+  mutate(longitude = "Not Provided") %>%
+  mutate(accuracy = "Not Provided") %>%
+  # select columns for PW metadata
+  select(`Data Accession`, 
+         `Study Accession`, 
+         `Sample Accession`, 
+         Country, 
+         City,
+         `Travel Associated`, 
+         `Travel Country`, 
+         `Country_Origin`,
+         `Purpose of Sampling`,
+         `Isolating Lab`,
+         `Lab Contact`,
+         Source,
+         `Host Health State`,
+         Strain, 
+         PMID,
+         latitude,
+         longitude,
+         accuracy,
+         Year,
+         Month,
+         Day) %>% 
+  rename(accession=`Data Accession`,
+         `project accession`=`Study Accession`,
+         biosample=`Sample Accession`,
+         `country isolated`=Country,
+         `country of origin`=Country_Origin,
+         `travel associated`=`Travel Associated`,
+         `travel country`=`Travel Country`, 
+         source=Source,
+         literaturelink=PMID,
+         `purpose of sampling`=`Purpose of Sampling`,
+         lab=`Isolating Lab`,
+         location=City,
+         `symptom status`=`Host Health State`,
+         contact=`Lab Contact`,
+         strain=Strain,
+         year=Year,
+         month=Month,
+         day=Day) %>%
+  replace(is.na(.), "") %>% # change NA to blank
+  mutate_all(funs(str_replace(., "Not Provided", ""))) # change 'Not Provided' to blank
+
+```
+
+## Merge in internal PW ids
+```{r add_internal_pw_ids}
+
+# Get internal PW id and accession. number
+pw_ids <- pw_ids %>%
+  select(id, `data accession`) %>%
+  rename(accession= `data accession`)
+
+# Merge PW id into metadata
+pw_format <- pw_format %>%
+  left_join(., pw_ids) %>%
+  relocate(id)
+
+```
+
+## Output new sheet
+```{r output_new_sheet}
+
+# Output PW compatible metadata
+write_csv(pw_format, paste0(dirname("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv"), "/" , 
+                            todays_date, " ",basename("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv")))
+
+```
+
+
+
