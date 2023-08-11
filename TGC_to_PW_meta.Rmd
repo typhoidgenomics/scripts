@@ -10,17 +10,20 @@ output:
     fig_height: 11.69
 ---
 
+# Setup knitr
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = getwd())
+```
 
+```{r load_packages}
 # Data wrangling
 library(tidyverse)
 library(dplyr)
 library(reshape2)
 ```
 
-## Load data
+# Load data
 ``` {r load_data}
 
 # TGC metadata template
@@ -68,6 +71,7 @@ pw_format <- tgc_data %>%
          Year,
          Month,
          Day) %>% 
+  # rename cols for PW formatting
   rename(accession=`Data Accession`,
          `project accession`=`Study Accession`,
          biosample=`Sample Accession`,
@@ -86,12 +90,13 @@ pw_format <- tgc_data %>%
          year=Year,
          month=Month,
          day=Day) %>%
+  # Fix missing values
   replace(is.na(.), "") %>% # change NA to blank
   mutate_all(funs(str_replace(., "Not Provided", ""))) # change 'Not Provided' to blank
 
 ```
 
-## Merge in internal PW ids
+# Merge in internal PW ids
 ```{r add_internal_pw_ids}
 
 # Get internal PW id and accession. number
@@ -106,7 +111,7 @@ pw_format <- pw_format %>%
 
 ```
 
-## Output new sheet
+# Output new sheet
 ```{r output_new_sheet}
 
 # Output PW compatible metadata
