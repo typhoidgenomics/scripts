@@ -10,28 +10,25 @@ output:
     fig_height: 11.69
 ---
 
-# Setup knitr
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = getwd())
-```
 
-```{r load_packages}
 # Data wrangling
 library(tidyverse)
 library(dplyr)
 library(reshape2)
 ```
 
-# Load data
+## Load data
 ``` {r load_data}
 
 # TGC metadata template
-tgc_data <- read_csv("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv",
+tgc_data <- read_csv("/Users/lshzd1/Desktop/Kenya_Typhi/Typhi Metadata Template.csv",
                      col_types = cols(.default = "c"))
 
 # PW template with ID column
-pw_ids <- read_csv("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/metadata.csv")
+pw_ids <- read_csv("/Users/lshzd1/Desktop/Kenya_Typhi/metadata.csv")
 
 # Get date for naming new sheet
 todays_date <- str_replace_all(Sys.Date(),"-","")
@@ -71,7 +68,6 @@ pw_format <- tgc_data %>%
          Year,
          Month,
          Day) %>% 
-  # rename cols for PW formatting
   rename(accession=`Data Accession`,
          `project accession`=`Study Accession`,
          biosample=`Sample Accession`,
@@ -90,19 +86,18 @@ pw_format <- tgc_data %>%
          year=Year,
          month=Month,
          day=Day) %>%
-  # Fix missing values
   replace(is.na(.), "") %>% # change NA to blank
   mutate_all(funs(str_replace(., "Not Provided", ""))) # change 'Not Provided' to blank
 
 ```
 
-# Merge in internal PW ids
+## Merge in internal PW ids
 ```{r add_internal_pw_ids}
 
 # Get internal PW id and accession. number
 pw_ids <- pw_ids %>%
-  select(id, `data accession`) %>%
-  rename(accession= `data accession`)
+  select(id, displayname) %>%
+  rename(accession= displayname)
 
 # Merge PW id into metadata
 pw_format <- pw_format %>%
@@ -111,12 +106,12 @@ pw_format <- pw_format %>%
 
 ```
 
-# Output new sheet
+## Output new sheet
 ```{r output_new_sheet}
 
 # Output PW compatible metadata
-write_csv(pw_format, paste0(dirname("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv"), "/" , 
-                            todays_date, " ",basename("/Users/lshzd1/Desktop/Fiji_Typhi/assemblies/Typhi Metadata Template.csv")))
+write_csv(pw_format, paste0(dirname("/Users/lshzd1/Desktop/Kenya_Typhi/Typhi Metadata Template.csv"), "/" , 
+                            todays_date, " ",basename("/Users/lshzd1/Desktop/Kenya_Typhi/Typhi Metadata Template.csv")))
 
 ```
 
